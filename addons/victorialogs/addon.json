@@ -1,0 +1,79 @@
+{
+  "id": "victorialogs",
+  "name": "VictoriaLogs",
+  "description": "High-performance, cost-effective log management from VictoriaMetrics — single-binary deployment with a built-in query UI, LogsQL query language, and automatic pod log collection via Vector.",
+  "category": "Observability",
+  "icon": "📋",
+  "logo": "https://raw.githubusercontent.com/VictoriaMetrics-Community/homeassistant-addon-victorialogs/refs/heads/master/victoria-logs/icon.png",
+  "target": "cluster",
+  "version": "1.52.0",
+  "docs_url": "https://docs.victoriametrics.com/victorialogs/",
+  "est_seconds": 300,
+  "arch_support": [
+    "amd64",
+    "arm64"
+  ],
+  "tags": [
+    "logs",
+    "observability",
+    "victoriametrics",
+    "logsql",
+    "helm"
+  ],
+  "dependencies": [
+    "helm"
+  ],
+  "setup_commands": [
+    {
+      "command": "helm repo add vm https://victoriametrics.github.io/helm-charts/ --force-update && helm repo update vm",
+      "label": "Adding VictoriaMetrics Helm repo"
+    },
+    {
+      "command": "helm upgrade --install vls vm/victoria-logs-single --version 0.13.8 --namespace logging --create-namespace --set server.image.tag=v${VERSION} --set server.retentionPeriod=7d --set server.persistentVolume.enabled=true --set server.persistentVolume.size=10Gi --wait --timeout 8m",
+      "label": "Installing VictoriaLogs (single-binary)"
+    },
+    {
+      "command": "helm upgrade --install vector vm/vector --version 0.9.0 --namespace logging --set 'customConfig.sources.kubernetes_logs.type=kubernetes_logs' --set 'customConfig.sinks.vlogs.type=elasticsearch' --set 'customConfig.sinks.vlogs.inputs[0]=kubernetes_logs' --set 'customConfig.sinks.vlogs.endpoints[0]=http://vls-victoria-logs-single-server.logging.svc.cluster.local:9428/insert/elasticsearch/' --set 'customConfig.sinks.vlogs.mode=bulk' --set 'customConfig.sinks.vlogs.healthcheck.enabled=false' --wait --timeout 5m 2>/dev/null || kubectl apply -f - <<'EOF'\napiVersion: apps/v1\nkind: DaemonSet\nmetadata:\n  name: vlogs-collector\n  namespace: logging\n  labels:\n    app: vlogs-collector\nspec:\n  selector:\n    matchLabels:\n      app: vlogs-collector\n  template:\n    metadata:\n      labels:\n        app: vlogs-collector\n    spec:\n      serviceAccountName: vlogs-collector\n      tolerations:\n        - effect: NoSchedule\n          operator: Exists\n      containers:\n        - name: vector\n          image: timberio/vector:0.44.0-alpine\n          args: [\"--config\", \"/etc/vector/vector.yaml\"]\n          env:\n            - name: VECTOR_SELF_NODE_NAME\n              valueFrom:\n                fieldRef:\n                  fieldPath: spec.nodeName\n          volumeMounts:\n            - name: config\n              mountPath: /etc/vector\n            - name: varlog\n              mountPath: /var/log\n              readOnly: true\n            - name: varlibdockercontainers\n              mountPath: /var/lib/docker/containers\n              readOnly: true\n          resources:\n            requests: {cpu: 50m, memory: 64Mi}\n            limits: {cpu: 200m, memory: 256Mi}\n      volumes:\n        - name: config\n          configMap:\n            name: vlogs-collector-config\n        - name: varlog\n          hostPath:\n            path: /var/log\n        - name: varlibdockercontainers\n          hostPath:\n            path: /var/lib/docker/containers\nEOF",
+      "label": "Deploying log collector (Vector)"
+    },
+    {
+      "command": "kubectl apply -f - <<'EOF'\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: vlogs-collector\n  namespace: logging\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nmetadata:\n  name: vlogs-collector\nrules:\n  - apiGroups: [\"\"]\n    resources: [\"pods\", \"namespaces\", \"nodes\"]\n    verbs: [\"get\", \"list\", \"watch\"]\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata:\n  name: vlogs-collector\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: vlogs-collector\nsubjects:\n  - kind: ServiceAccount\n    name: vlogs-collector\n    namespace: logging\nEOF",
+      "label": "Configuring RBAC for log collector"
+    },
+    {
+      "command": "kubectl apply -f - <<'EOF'\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: vlogs-collector-config\n  namespace: logging\ndata:\n  vector.yaml: |\n    sources:\n      kubernetes_logs:\n        type: kubernetes_logs\n        self_node_name: \"${VECTOR_SELF_NODE_NAME}\"\n    transforms:\n      remap_logs:\n        type: remap\n        inputs: [\"kubernetes_logs\"]\n        source: |\n          .stream = del(.kubernetes.pod_labels)\n          .\"_msg\" = del(.message)\n    sinks:\n      vlogs:\n        type: elasticsearch\n        inputs: [\"remap_logs\"]\n        endpoints:\n          - http://vls-victoria-logs-single-server.logging.svc.cluster.local:9428/insert/elasticsearch/\n        mode: bulk\n        healthcheck:\n          enabled: false\n        request:\n          headers:\n            VL-Stream-Fields: stream,kubernetes.pod_namespace,kubernetes.pod_name,kubernetes.container_name\nEOF",
+      "label": "Applying Vector config"
+    },
+    {
+      "command": "kubectl rollout restart daemonset/vlogs-collector -n logging 2>/dev/null || true && kubectl -n logging rollout status daemonset/vlogs-collector --timeout=120s 2>/dev/null || true",
+      "label": "Restarting collector with updated config"
+    },
+    {
+      "command": "[ -f /var/run/vlogs-pf.pid ] && kill $(cat /var/run/vlogs-pf.pid) 2>/dev/null; sleep 1; nohup kubectl -n logging port-forward --address 0.0.0.0 svc/vls-victoria-logs-single-server 9428:9428 >/var/log/vlogs-portforward.log 2>&1 & echo $! >/var/run/vlogs-pf.pid; sleep 2; echo 'VictoriaLogs UI ready on :9428'",
+      "label": "Starting VictoriaLogs port-forward"
+    }
+  ],
+  "teardown_commands": [
+    {
+      "command": "[ -f /var/run/vlogs-pf.pid ] && kill $(cat /var/run/vlogs-pf.pid) 2>/dev/null; rm -f /var/run/vlogs-pf.pid; true",
+      "label": "Stopping VictoriaLogs port-forward"
+    },
+    {
+      "command": "kubectl delete daemonset vlogs-collector -n logging --ignore-not-found && kubectl delete configmap vlogs-collector-config -n logging --ignore-not-found && kubectl delete serviceaccount vlogs-collector -n logging --ignore-not-found && kubectl delete clusterrole vlogs-collector --ignore-not-found && kubectl delete clusterrolebinding vlogs-collector --ignore-not-found",
+      "label": "Removing log collector"
+    },
+    {
+      "command": "helm uninstall vector -n logging 2>/dev/null || true",
+      "label": "Uninstalling Vector"
+    },
+    {
+      "command": "helm uninstall vls -n logging 2>/dev/null || true",
+      "label": "Uninstalling VictoriaLogs"
+    },
+    {
+      "command": "kubectl delete namespace logging --ignore-not-found",
+      "label": "Removing namespace"
+    }
+  ],
+  "health_command": "helm status vls -n logging"
+}

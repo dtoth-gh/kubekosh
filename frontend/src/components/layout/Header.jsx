@@ -84,6 +84,7 @@ export default function Header({ clusterReady, onShowHistory, onShowAddons, addo
     { id: 'opencost', path: '/opencost', label: 'Open OpenCost' },
     { id: 'traefik', path: '/traefik', label: 'Open Traefik' },
     { id: 'falco', path: '/falco', label: 'Open Falco UI' },
+    { id: 'victorialogs', path: '/vmui', label: 'Open VictoriaLogs' },
   ]
 
   // Only show buttons for installed addons; carry logo + icon from live data
