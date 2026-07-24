@@ -85,15 +85,15 @@ Scenarios are organized into **tracks** (themes) containing one or more **bundle
 
 | Track | Bundle | Focus | Scenarios | Exam |
 |---|---|---|:---:|:---:|
-| 💡 Core Concepts | 🌱 Kubernetes Basics | Pods, deployments, services, config | 13 | 60 min |
-| 💡 Core Concepts | 🔀 Gateway API | Gateways, HTTPRoutes, TLS routing | 10 | 60 min |
-| 🎓 Certifications | 🧑‍✈️ Kubernetes Administrator | CKA prep — nodes, RBAC, storage | 12 | 120 min |
-| 🎓 Certifications | 🛠️ Kubernetes Developer | CKAD prep — workloads, probes, HPA | 8 | 120 min |
-| 🎓 Certifications | 🔐 Kubernetes Security | CKS prep — PSA, NetworkPolicy, OPA | 8 | 120 min |
-| 🌐 Networking | ⛵ Istio | Traffic management, mTLS, VirtualServices | 10 | 60 min |
-| 🌐 Networking | 🚦 Traefik | IngressRoutes, middlewares, TLS | 10 | 60 min |
-| 🌐 Networking | 🔀 HAProxy Ingress | Annotations, backends, load balancing | 10 | 60 min |
-| 🛡️ Security & Policy | 🦅 Falco | Runtime threat detection, custom rules | 10 | 60 min |
+| 💡 Core Concepts | 🌱 Kubernetes Basics | Pods, workloads, services, storage, RBAC, debugging | 40 | 60 min |
+| 💡 Core Concepts | 🚪 Gateway API | Gateways, HTTPRoutes, traffic splitting, ReferenceGrants | 10 | 60 min |
+| 🎓 Certifications | 🛠️ Kubernetes Developer | CKAD prep — workloads, probes, storage, networking | 25 | 120 min |
+| 🎓 Certifications | 🧑‍✈️ Kubernetes Administrator | CKA prep — nodes, RBAC, storage, networking, debugging | 40 | 120 min |
+| 🎓 Certifications | 🛡 Kubernetes Security | CKS prep — PSA, NetworkPolicy, seccomp, AppArmor, RBAC | 25 | 120 min |
+| 🌐 Networking | 🕸️ Istio Service Mesh | Traffic management, mTLS, VirtualServices, AuthorizationPolicy | 10 | 60 min |
+| 🌐 Networking | 🚦 Traefik Ingress | IngressRoutes, middlewares, TLS options | 10 | 60 min |
+| 🌐 Networking | 🔀 HAProxy Ingress | Annotations, backends, load balancing, TLS | 10 | 60 min |
+| 🛡️ Security & Policy | 🦅 Falco | Runtime threat detection, custom rules, outputs | 10 | 60 min |
 
 **Scenario types:**
 - **Task** — Hands-on challenge in the live terminal. Click **Validate** for automated cluster-state checking.
@@ -153,6 +153,7 @@ Each install **streams live logs**, **resolves dependencies automatically** (ins
 | 🪵 Loki | Cluster | Log aggregation with Promtail |
 | 🔭 Thanos | Cluster | Global / HA Prometheus query layer |
 | 💰 OpenCost | Cluster | Real-time Kubernetes cost monitoring |
+| 📋 VictoriaLogs | Cluster | High-performance log management with built-in vmui |
 
 ### Built-in Dashboards
 
@@ -164,6 +165,7 @@ Some add-ons expose a web UI through the same `7554` port (no extra ports to pub
 | OpenCost | http://localhost:7554/opencost | cost explorer (uses Prometheus from kube-prometheus-stack) |
 | Traefik | http://localhost:7554/traefik | routers, services & middlewares dashboard |
 | Falco UI | http://localhost:7554/falco | Falcosidekick Web UI dashboard |
+| VictoriaLogs VMUI | http://localhost:7554/vmui | built-in log query UI (LogsQL) |
 
 ---
 
@@ -196,7 +198,10 @@ addons/
 └── SCHEMA.md         # Full manifest schema reference
 
 backend/
-└── server.js         # Express API + WebSocket PTY
+├── db/               # SQLite database layer
+├── lib/              # Shared utilities and cache
+├── routes/           # Express route modules
+└── server.js         # App entry point (Express + WebSocket PTY)
 
 frontend/
 └── src/              # React + Vite SPA
