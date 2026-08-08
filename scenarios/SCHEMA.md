@@ -113,7 +113,7 @@ Requires the user to run shell commands in the interactive terminal. The system 
         "description": "Checks the running pods count",
         "command": "kubectl get deploy nginx -o jsonpath='{.status.readyReplicas}'",
         "expected_output": "3",
-        "match": "exact" // "exact" | "contains" | "not_contains" | "regex"
+        "match": "exact" // "exact" | "not_exact" | "contains" | "not_contains" | "regex"
       }
     ]
   }
@@ -124,6 +124,7 @@ Requires the user to run shell commands in the interactive terminal. The system 
 | Mode | Behaviour |
 | :--- | :--- |
 | `exact` | Trimmed stdout must exactly equal `expected_output`. |
+| `not_exact` | Trimmed stdout must **not** exactly equal `expected_output`. |
 | `contains` | stdout must contain `expected_output` as a substring. |
 | `not_contains` | stdout must **not** contain `expected_output` as a substring. |
 | `regex` | stdout must match the regular expression in `expected_output`. |

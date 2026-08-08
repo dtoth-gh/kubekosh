@@ -44,13 +44,14 @@ async function runCommand(cmd, timeoutMs = 15000) {
  *
  * @param {string} actual
  * @param {string} expected
- * @param {'exact'|'contains'|'not_contains'|'regex'} matchType
+ * @param {'exact'|'not_exact'|'contains'|'not_contains'|'regex'} matchType
  * @returns {boolean}
  */
 function checkMatch(actual, expected, matchType) {
   const a = String(actual).trim();
   const e = String(expected).trim();
   if (matchType === 'exact')        return a === e;
+  if (matchType === 'not_exact')    return a !== e;
   if (matchType === 'contains')     return a.includes(e);
   if (matchType === 'not_contains') return !a.includes(e);
   if (matchType === 'regex')        return new RegExp(e).test(a);

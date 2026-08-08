@@ -596,8 +596,10 @@ export default function ScenarioPanel({ scenario, onProgressUpdate, onScenarioSt
                       {!c.passed && (
                         <div className={styles.checkDetail}>
                           <span>
-                            {c.match === 'not_contains' ? 'Must not contain:' :
+                            {c.match === 'exact'        ? 'Must be:'          :
+                             c.match === 'not_exact'    ? 'Must not be:'      :
                              c.match === 'contains'     ? 'Must contain:'     :
+                             c.match === 'not_contains' ? 'Must not contain:' :
                              c.match === 'regex'        ? 'Must match:'       :
                                                           'Expected:'}
                             {' '}<code>{c.expected}</code>
