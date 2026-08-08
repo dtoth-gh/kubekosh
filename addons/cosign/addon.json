@@ -1,0 +1,28 @@
+{
+  "id": "cosign",
+  "name": "Cosign",
+  "description": "Sigstore's container image signing and verification tool — sign, verify, and inspect container image signatures and attestations using keyless OIDC or traditional key pairs.",
+  "category": "Security & Policy",
+  "icon": "🔏",
+  "logo": "https://raw.githubusercontent.com/sigstore/community/main/artwork/cosign/Cosign_Logo_DarkBackground.svg",
+  "target": "os",
+  "version": "3.1.3",
+  "docs_url": "https://docs.sigstore.dev/cosign/overview/",
+  "est_seconds": 30,
+  "arch_support": ["amd64", "arm64"],
+  "tags": ["security", "signing", "supply-chain", "sigstore", "oci", "cli"],
+  "dependencies": [],
+  "setup_commands": [
+    {
+      "command": "curl -fsSL -o ${ADDON_BIN}/cosign https://github.com/sigstore/cosign/releases/download/v${VERSION}/cosign-linux-${ARCH} && chmod +x ${ADDON_BIN}/cosign",
+      "label": "Downloading and installing cosign binary"
+    }
+  ],
+  "teardown_commands": [
+    {
+      "command": "rm -f ${ADDON_BIN}/cosign",
+      "label": "Removing cosign binary"
+    }
+  ],
+  "health_command": "cosign version"
+}

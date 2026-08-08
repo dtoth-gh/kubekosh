@@ -142,6 +142,7 @@ Each install **streams live logs**, **resolves dependencies automatically** (ins
 |---|---|---|
 | ⎈ Helm | OS | Kubernetes package manager |
 | 🧱 Kustomize | OS | Template-free manifest customization |
+| 🔏 Cosign | OS | Container signing, verification, and storage in OCI registries |
 | 🦅 Falco | Cluster | Cloud-native runtime security tool |
 | 🛡️ Kyverno | Cluster | Policy engine (validate / mutate / generate) |
 | 🔐 cert-manager | Cluster | Automated TLS certificate management |
