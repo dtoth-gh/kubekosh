@@ -23,7 +23,7 @@
     "commands": [
       {
         "description": "Node is schedulable (not cordoned)",
-        "command": "kubectl get nodes -o jsonpath='{.items[0].spec.unschedulable}' 2>/dev/null || echo 'false'",
+        "command": "kubectl get nodes -o jsonpath='{.items[0].spec.unschedulable}' 2>/dev/null | grep -q '^true$' && echo 'true' || echo 'false'",
         "expected_output": "false",
         "match": "contains"
       },
